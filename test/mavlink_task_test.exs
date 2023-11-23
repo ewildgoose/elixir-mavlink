@@ -33,7 +33,8 @@ defmodule MAVLink.Test.Tasks do
         TestMavlink.Message.Data16,
         TestMavlink.Message.Heartbeat,
         TestMavlink.Message.VfrHud,
-        TestMavlink.Types],
+        TestMavlink.Types]
+        |> Enum.sort(),
       Code.compile_file(@output)
       |> Keyword.keys()
       |> Enum.sort()
