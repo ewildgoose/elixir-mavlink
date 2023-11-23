@@ -52,7 +52,6 @@ defmodule MAVLink.Parser do
   import Enum, only: [empty?: 1, reduce: 3, reverse: 1, map: 2, sort_by: 2, into: 3, filter: 2]
   import List, only: [first: 1]
   import Record, only: [defrecord: 2, extract: 2]
-  import Regex, only: [replace: 3]
   import String, only: [to_integer: 1, downcase: 1, to_atom: 1, split: 3]
 
   
@@ -298,8 +297,7 @@ defmodule MAVLink.Parser do
   
   @spec clean_string([ char ] | binary) :: String.t
   defp clean_string(s) do
-    trimmed = s |> List.to_string |> String.trim
-    replace(~r/\s+/, trimmed, " ")
+    s |> List.to_string |> String.trim |> String.replace("\"", "'") |> String.replace(~r/\s+/, " ")
   end
   
   
