@@ -60,7 +60,7 @@ defmodule MAVLink.UDPInConnection do
         :ok = Logger.info("Opened udpin:#{Enum.join(Tuple.to_list(address), ".")}:#{port}")
         :gen_udp.controlling_process(socket, controlling_process)
       other ->
-        :ok = Logger.warn("Could not open udpin:#{Enum.join(Tuple.to_list(address), ".")}:#{port}: #{inspect(other)}. Retrying in 1 second")
+        :ok = Logger.warning("Could not open udpin:#{Enum.join(Tuple.to_list(address), ".")}:#{port}: #{inspect(other)}. Retrying in 1 second")
         :timer.sleep(1000)
         connect(["udpin", address, port], controlling_process)
     end
