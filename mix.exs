@@ -5,14 +5,14 @@ defmodule MAVLink.Mixfile do
     [
       app: :mavlink,
       version: "0.9.0",
-      elixir: "~> 1.9",
+      elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
       aliases: aliases(),
       deps: deps(),
       dialyzer: [plt_add_apps: [:mix, :xmerl]],
-      source_url: "https://github.com/robinhilliard/elixir-mavlink",
+      source_url: "https://github.com/beamuav/elixir-mavlink",
       consolidate_protocols: Mix.env() != :test
     ]
   end
