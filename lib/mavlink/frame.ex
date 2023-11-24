@@ -204,7 +204,7 @@ defmodule MAVLink.Frame do
               frame.source_system::unsigned-integer-size(8),
               frame.source_component::unsigned-integer-size(8),
               frame.message_id::little-unsigned-integer-size(8),
-              frame.payload::binary()>>
+              frame.payload::binary>>
     
     frame |> struct([
       mavlink_1_raw: <<0xfe>> <> mavlink_1_frame <> checksum(mavlink_1_frame, frame.crc_extra)
@@ -220,7 +220,7 @@ defmodule MAVLink.Frame do
               frame.source_system::unsigned-integer-size(8),
               frame.source_component::unsigned-integer-size(8),
               frame.message_id::little-unsigned-integer-size(24),
-              truncated_payload::binary()>>
+              truncated_payload::binary>>
     struct(frame,[
       mavlink_2_raw: <<0xfd>> <> mavlink_2_frame <> checksum(mavlink_2_frame, frame.crc_extra)
     ])
