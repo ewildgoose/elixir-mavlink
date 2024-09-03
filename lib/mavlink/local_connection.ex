@@ -58,12 +58,12 @@ defmodule MAVLink.LocalConnection do
         :local,
         case Agent.start(fn -> [] end, name: MAVLink.SubscriptionCache) do
           {:ok, _} ->
-            :ok = Logger.debug("Started Subscription Cache")
+            Logger.debug("Started Subscription Cache")
             # No subscriptions to restore
             local_connection
 
           {:error, {:already_started, _}} ->
-            :ok = Logger.debug("Restoring subscriptions from Subscription Cache")
+            Logger.debug("Restoring subscriptions from Subscription Cache")
 
             Agent.get(MAVLink.SubscriptionCache, fn subs -> subs end)
             |> Enum.reduce(
@@ -119,7 +119,7 @@ defmodule MAVLink.LocalConnection do
 
   # Subscription request from subscriber
   def subscribe(query, pid, local_connection) do
-    :ok = Logger.debug("Subscribe #{inspect(pid)} to query #{inspect(query)}")
+    Logger.debug("Subscribe #{inspect(pid)} to query #{inspect(query)}")
     # Monitor so that we can unsubscribe dead processes
     Process.monitor(pid)
     # Uniq prevents duplicate subscriptions
@@ -134,7 +134,7 @@ defmodule MAVLink.LocalConnection do
 
   # Unsubscribe request from subscriber
   def unsubscribe(pid, local_connection) do
-    :ok = Logger.debug("Unsubscribe #{inspect(pid)}")
+    Logger.debug("Unsubscribe #{inspect(pid)}")
 
     %LocalConnection{
       local_connection
@@ -147,7 +147,7 @@ defmodule MAVLink.LocalConnection do
 
   # Automatically unsubscribe a dead subscriber process
   def subscriber_down(pid, local_connection) do
-    :ok = Logger.debug("Subscriber #{inspect(pid)} exited")
+    Logger.debug("Subscriber #{inspect(pid)} exited")
 
     %LocalConnection{
       local_connection
@@ -159,7 +159,7 @@ defmodule MAVLink.LocalConnection do
   end
 
   defp update_subscription_cache(subscriptions) do
-    :ok = Logger.debug("Update subscription cache: #{inspect(subscriptions)}")
+    Logger.debug("Update subscription cache: #{inspect(subscriptions)}")
     Agent.update(MAVLink.SubscriptionCache, fn _ -> subscriptions end)
     subscriptions
   end

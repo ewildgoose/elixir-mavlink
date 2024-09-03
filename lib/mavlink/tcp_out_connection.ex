@@ -68,7 +68,7 @@ defmodule MAVLink.TCPOutConnection do
   def connect(["tcpout", address, port], controlling_process) do
     case :gen_tcp.connect(address, port, [:binary, active: true]) do
       {:ok, socket} ->
-        :ok = Logger.debug("Opened tcpout:#{Enum.join(Tuple.to_list(address), ".")}:#{port}")
+        Logger.debug("Opened tcpout:#{Enum.join(Tuple.to_list(address), ".")}:#{port}")
 
         send(
           controlling_process,

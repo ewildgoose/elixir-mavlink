@@ -30,7 +30,7 @@ defmodule MAVLink.UDPOutConnection do
     case binary_to_frame_and_tail(raw) do
       :not_a_frame ->
         # Noise or malformed frame
-        :ok = Logger.debug("UDPOutConnection.handle_info: Not a frame #{inspect(raw)}")
+        Logger.debug("UDPOutConnection.handle_info: Not a frame #{inspect(raw)}")
         {:error, :not_a_frame, {socket, source_addr, source_port}, receiving_connection}
 
       # UDP sends frame per packet, so ignore rest
@@ -43,7 +43,7 @@ defmodule MAVLink.UDPOutConnection do
 
           :unknown_message ->
             # We re-broadcast valid frames with unknown messages
-            :ok = Logger.debug("relaying unknown message with id #{received_frame.message_id}}")
+            Logger.debug("relaying unknown message with id #{received_frame.message_id}}")
 
             {:ok, {socket, source_addr, source_port}, receiving_connection,
              struct(received_frame, target: :broadcast)}
@@ -63,7 +63,7 @@ defmodule MAVLink.UDPOutConnection do
   def connect(["udpout", address, port], controlling_process) do
     case :gen_udp.open(0, [:binary, active: true]) do
       {:ok, socket} ->
-        :ok = Logger.info("Opened udpout:#{Enum.join(Tuple.to_list(address), ".")}:#{port}")
+        Logger.info("Opened udpout:#{Enum.join(Tuple.to_list(address), ".")}:#{port}")
 
         send(
           controlling_process,

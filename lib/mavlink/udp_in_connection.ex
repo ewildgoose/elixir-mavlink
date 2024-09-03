@@ -31,7 +31,7 @@ defmodule MAVLink.UDPInConnection do
     case binary_to_frame_and_tail(raw) do
       :not_a_frame ->
         # Noise or malformed frame
-        :ok = Logger.debug("UDPInConnection.handle_info: Not a frame #{inspect(raw)}")
+        Logger.debug("UDPInConnection.handle_info: Not a frame #{inspect(raw)}")
         {:error, :not_a_frame, {socket, source_addr, source_port}, receiving_connection}
 
       # UDP sends frame per packet, so ignore rest
@@ -68,7 +68,7 @@ defmodule MAVLink.UDPInConnection do
     # connect to this socket
     case :gen_udp.open(port, [:binary, ip: address, active: true]) do
       {:ok, socket} ->
-        :ok = Logger.info("Opened udpin:#{Enum.join(Tuple.to_list(address), ".")}:#{port}")
+        Logger.info("Opened udpin:#{Enum.join(Tuple.to_list(address), ".")}:#{port}")
         :gen_udp.controlling_process(socket, controlling_process)
 
       other ->
