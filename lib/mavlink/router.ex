@@ -232,7 +232,7 @@ defmodule MAVLink.Router do
         __MODULE__,
         {
           :local,
-          struct(Frame,
+          %Frame{
             version: version,
             message_id: message_id,
             target_system: target_system,
@@ -241,7 +241,7 @@ defmodule MAVLink.Router do
             message: message,
             payload: payload,
             crc_extra: crc_extra
-          )
+          }
         }
       )
 
@@ -576,13 +576,11 @@ defmodule MAVLink.Router do
   defp matching_system_components(q_system, q_component, %Router{routes: routes}) do
     [
       :local
-      | Enum.filter(
-          routes,
-          fn {{sid, cid}, _} ->
-            (q_system == 0 or q_system == sid) and
-              (q_component == 0 or q_component == cid)
-          end
-        )
+      | routes
+        |> Enum.filter(fn {{sid, cid}, _} ->
+          (q_system == 0 or q_system == sid) and
+            (q_component == 0 or q_component == cid)
+        end)
         |> Enum.map(fn {_, ck} -> ck end)
     ]
   end

@@ -48,7 +48,7 @@ defmodule MAVLink.LocalConnection do
   end
 
   def connect(:local, system, component) do
-    local_connection = struct(LocalConnection, system: system, component: component)
+    local_connection = %LocalConnection{system: system, component: component}
 
     send(
       # Local connection guaranteed, so this connect() called directly from Router process
@@ -93,28 +93,19 @@ defmodule MAVLink.LocalConnection do
           message: message = %{__struct__: message_type}
         }
       ) do
-    for {
-          %{
-            message: q_message_type,
-            source_system: q_source_system,
-            source_component: q_source_component,
-            target_system: q_target_system,
-            target_component: q_target_component,
-            as_frame: as_frame?
-          },
-          pid
-        } <- subscriptions do
-      if (q_message_type == nil or q_message_type == message_type) and
-           (q_source_system == 0 or q_source_system == source_system) and
-           (q_source_component == 0 or q_source_component == source_component) and
-           (q_target_system == 0 or
-              (target != :broadcast and target != :component and q_target_system == target_system)) and
-           (q_target_component == 0 or
+    subscriptions
+    |> Enum.each(fn {q, pid} ->
+      if (q.message == nil or q.message == message_type) and
+           (q.source_system == 0 or q.source_system == source_system) and
+           (q.source_component == 0 or q.source_component == source_component) and
+           (q.target_system == 0 or
+              (target != :broadcast and target != :component and q.target_system == target_system)) and
+           (q.target_component == 0 or
               (target != :broadcast and target != :system and
-                 q_target_component == target_component)) do
-        send(pid, if(as_frame?, do: frame, else: message))
+                 q.target_component == target_component)) do
+        send(pid, if(q.as_frame, do: frame, else: message))
       end
-    end
+    end)
   end
 
   # Subscription request from subscriber

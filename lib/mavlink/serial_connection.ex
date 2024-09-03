@@ -81,12 +81,11 @@ defmodule MAVLink.SerialConnection do
             {
               :add_connection,
               port,
-              struct(
-                MAVLink.SerialConnection,
+              %MAVLink.SerialConnection{
                 port: port,
                 baud: baud,
                 uart: uart
-              )
+              }
             }
           )
 

@@ -75,12 +75,11 @@ defmodule MAVLink.TCPOutConnection do
           {
             :add_connection,
             socket,
-            struct(
-              MAVLink.TCPOutConnection,
+            %MAVLink.TCPOutConnection{
               socket: socket,
               address: address,
               port: port
-            )
+            }
           }
         )
 

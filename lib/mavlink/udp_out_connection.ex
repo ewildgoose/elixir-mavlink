@@ -70,12 +70,11 @@ defmodule MAVLink.UDPOutConnection do
           {
             :add_connection,
             socket,
-            struct(
-              MAVLink.UDPOutConnection,
+            %MAVLink.UDPOutConnection{
               socket: socket,
               address: address,
               port: port
-            )
+            }
           }
         )
 
