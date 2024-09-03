@@ -7,9 +7,6 @@ defmodule MAVLink.Utils do
 
   import Bitwise
 
-  import List, only: [flatten: 1]
-  import Enum, only: [sort_by: 2, join: 2, map: 2, reverse: 1]
-
   @doc """
   Sort parsed message fields into wire order according
   to https://mavlink.io/en/guide/serialization.html
@@ -34,7 +31,7 @@ defmodule MAVLink.Utils do
     }
 
     [
-      sort_by(
+      Enum.sort_by(
         Enum.filter(fields, &(!&1.is_extension)),
         &Map.fetch(type_order_map, String.to_atom(&1.type))
       ),
@@ -53,7 +50,7 @@ defmodule MAVLink.Utils do
 
   @spec x25_crc([] | binary()) :: pos_integer
   def x25_crc(list) when is_list(list) do
-    x25_crc(0xFFFF, flatten(list))
+    x25_crc(0xFFFF, List.flatten(list))
   end
 
   def x25_crc(bin) when is_binary(bin) do
@@ -93,13 +90,13 @@ defmodule MAVLink.Utils do
   def pack_array(a, ordinality, field_packer) when length(a) < ordinality,
     do: pack_array(a ++ [0], ordinality, field_packer)
 
-  def pack_array(a, _, field_packer), do: a |> map(field_packer) |> join(<<>>)
+  def pack_array(a, _, field_packer), do: a |> Enum.map(field_packer) |> Enum.join(<<>>)
 
   @doc "Helper function for decode() to unpack array fields"
   # TODO bitstring generator instead? https://elixir-lang.org/getting-started/comprehensions.html
   @spec unpack_array(binary(), (binary() -> {any(), list()})) :: list()
   def unpack_array(bin, fun), do: unpack_array(bin, fun, [])
-  def unpack_array(<<>>, _, lst), do: reverse(lst)
+  def unpack_array(<<>>, _, lst), do: Enum.reverse(lst)
 
   def unpack_array(bin, fun, lst) do
     {elem, rest} = fun.(bin)
@@ -112,7 +109,7 @@ defmodule MAVLink.Utils do
   end
 
   def parse_ip_address([], address, 4) do
-    List.to_tuple(reverse(address))
+    List.to_tuple(Enum.reverse(address))
   end
 
   def parse_ip_address([], _, _) do

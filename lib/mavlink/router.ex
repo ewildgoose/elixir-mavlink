@@ -17,7 +17,6 @@ defmodule MAVLink.Router do
   require Logger
 
   import MAVLink.Utils, only: [parse_ip_address: 1, parse_positive_integer: 1]
-  import Enum, only: [map: 2]
 
   alias MAVLink.Types
   alias MAVLink.Frame
@@ -271,7 +270,7 @@ defmodule MAVLink.Router do
   # to us if successful) and initialise Router state
   def init(args) do
     LocalConnection.connect(:local, args.system, args.component)
-    _ = map(args.connection_strings, &connect/1)
+    _ = Enum.map(args.connection_strings, &connect/1)
     {:ok, %Router{dialect: args.dialect, connection_strings: args.connection_strings}}
   end
 

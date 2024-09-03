@@ -4,8 +4,8 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
 
   import MAVLink.Parser
   import DateTime
-  import Enum, only: [any?: 2, count: 1, join: 2, map: 2, filter: 2, reduce: 3, reverse: 1, sort: 1, into: 3]
-  import String, only: [trim: 1, replace: 3, split: 2, capitalize: 1, downcase: 1]
+  import Enum, only: [join: 2, map: 2]
+  import String, only: [trim: 1, replace: 3, downcase: 1]
   import MAVLink.Utils
   import Mix.Generator, only: [create_file: 3]
   import Path, only: [rootname: 1, basename: 1]
@@ -174,7 +174,7 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
           (map(entry_code_fragments, & &1[:describe])
           |> join("\n  ")),
 
-        describe_params: filter(entry_code_fragments, & &1 != nil)
+        describe_params: Enum.filter(entry_code_fragments, & &1 != nil)
           |> map(& &1[:describe_params])
           |> join("\n  "),
 
@@ -200,7 +200,7 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
   @spec get_entry_code_fragments(MAVLink.Parser.enum_description) :: [ entry_detail ]
   defp get_entry_code_fragments(enum = %{name: enum_name, entries: entries}) do
     bitmask? = looks_like_a_bitmask?(enum)
-    {details, _} = reduce(
+    {details, _} = Enum.reduce(
       entries,
       {[], 0},
       fn entry, {details, next_value} ->
@@ -236,14 +236,14 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
 
       end
     )
-    reverse(details)
+    Enum.reverse(details)
   end
 
 
   @spec get_param_code_fragments(String.t, [MAVLink.Parser.param_description]) :: String.t
   defp get_param_code_fragments(entry_name, entry_params) do
     cond do
-      count(entry_params) == 0 ->
+      Enum.count(entry_params) == 0 ->
         nil
       true ->
         ~s/def describe_params(:#{entry_name}), do: [/ <>
@@ -256,7 +256,7 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
   @spec get_message_code_fragments([MAVLink.Parser.message_description], [enum_detail], String.t) :: [ String.t ]
   defp get_message_code_fragments(messages, enums, module_name) do
     # Lookup used by looks_like_a_bitmask?()
-    enums_by_name = into(enums, %{}, fn (enum) -> {Atom.to_string(enum.name), enum} end)
+    enums_by_name = Enum.into(enums, %{}, fn (enum) -> {Atom.to_string(enum.name), enum} end)
 
     for message <- messages do
       message_module_name = message.name |> module_case
@@ -265,7 +265,7 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
       field_types = message.fields |> map(& downcase(&1.name) <> ": " <> field_type(&1, module_name)) |> join(", ")
       wire_order = message.fields |> wire_order
 
-      target = case {any?(message.fields, & &1.name == "target_system"), any?(message.fields, & &1.name == "target_component")} do
+      target = case {Enum.any?(message.fields, & &1.name == "target_system"), Enum.any?(message.fields, & &1.name == "target_component")} do
         {false, false} ->
           :broadcast
         {true, false} ->
@@ -299,7 +299,7 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
       crc_extra = calculate_message_crc_extra(message)
 
       # Including extension fields - currently only used for MAVLink 2 payload truncation
-      expected_payload_size = reduce(
+      expected_payload_size = Enum.reduce(
         message.fields,
         0,
         fn(field, sum) -> sum + type_to_binary(field.type).size * field.ordinality end) # Before MAVLink 2 trailing 0 truncation
@@ -358,7 +358,7 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
 
   @spec calculate_message_crc_extra(MAVLink.Parser.message_description) :: MAVLink.Types.crc_extra
   defp calculate_message_crc_extra(message) do
-    reduce(
+    Enum.reduce(
       message.fields |> wire_order |> hd, # Do not include extension fields
       x25_crc(message.name <> " "),
       fn(field, crc) ->
@@ -447,11 +447,11 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
 
   @spec get_unit_code_fragments([MAVLink.Parser.message_description]) :: [ String.t ]
   defp get_unit_code_fragments(messages) do
-    reduce(
+    Enum.reduce(
       messages,
       MapSet.new(),
       fn message, units ->
-        reduce(
+        Enum.reduce(
           message.fields,
           units,
           fn %{units: next_unit}, units ->
@@ -474,15 +474,15 @@ defmodule Mix.Tasks.Mavlink do # Mavlink case required for `mix mavlink ...` to 
   @spec module_case(String.t) :: String.t
   defp module_case(name) do
     name
-    |> split("_")
-    |> map(&capitalize/1)
+    |> String.split("_")
+    |> map(&String.capitalize/1)
     |> join("")
   end
 
 
   # Some bitmask fields e.g. EkfStatusReport.flags are not marked with display="bitmask". This function
   # returns true if the enum entry values start with 1, 2, 4 and then continue increasing through powers of 2.
-  defp looks_like_a_bitmask?(%{entries: entries}), do: looks_like_a_bitmask?(entries |> map(& &1.value) |> sort)
+  defp looks_like_a_bitmask?(%{entries: entries}), do: looks_like_a_bitmask?(entries |> map(& &1.value) |> Enum.sort)
   defp looks_like_a_bitmask?([1, 2, 4 | rest]), do: looks_like_a_bitmask?(rest)
   defp looks_like_a_bitmask?([8 | rest]), do: looks_like_a_bitmask?(rest |> map(& &1 >>> 1))
   defp looks_like_a_bitmask?([]), do: true

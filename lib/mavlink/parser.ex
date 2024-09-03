@@ -48,15 +48,13 @@ defmodule MAVLink.Parser do
    }
   """
 
-  import Enum, only: [empty?: 1, reduce: 3, reverse: 1, map: 2, sort_by: 2, into: 3, filter: 2]
-  import List, only: [first: 1]
-  import Record, only: [defrecord: 2, extract: 2]
-  import String, only: [to_integer: 1, downcase: 1, to_atom: 1, split: 3]
+  import Record, only: [defrecord: 2]
+  import String, only: [to_integer: 1, downcase: 1]
 
   @xmerl_header "xmerl/include/xmerl.hrl"
-  defrecord :xmlElement, extract(:xmlElement, from_lib: @xmerl_header)
-  defrecord :xmlAttribute, extract(:xmlAttribute, from_lib: @xmerl_header)
-  defrecord :xmlText, extract(:xmlText, from_lib: @xmerl_header)
+  defrecord :xmlElement, Record.extract(:xmlElement, from_lib: @xmerl_header)
+  defrecord :xmlAttribute, Record.extract(:xmlAttribute, from_lib: @xmerl_header)
+  defrecord :xmlText, Record.extract(:xmlText, from_lib: @xmerl_header)
 
   @spec parse_mavlink_xml(String.t()) ::
           %{
@@ -81,8 +79,8 @@ defmodule MAVLink.Parser do
           {defs, []} ->
             # Recursively add new includes to paths
             paths =
-              reduce(
-                :xmerl_xpath.string(~c"/mavlink/include/text()", defs) |> map(&extract_text/1),
+              Enum.reduce(
+                :xmerl_xpath.string(~c"/mavlink/include/text()", defs) |> Enum.map(&extract_text/1),
                 paths,
                 fn next_include, acc ->
                   include_path = Path.dirname(path) <> "/" <> next_include
@@ -149,31 +147,31 @@ defmodule MAVLink.Parser do
         version: max(v1, v2),
         dialect: max(d1, d2),
         enums: merge_enums(e1, e2),
-        messages: sort_by(m1 ++ m2, & &1.id)
+        messages: Enum.sort_by(m1 ++ m2, & &1.id)
       }
       | more_definitions
     ])
   end
 
   def merge_enums(as, bs) do
-    a_index = into(as, %{}, fn enum -> {enum.name, enum} end)
-    b_index = into(bs, %{}, fn enum -> {enum.name, enum} end)
+    a_index = Enum.into(as, %{}, fn enum -> {enum.name, enum} end)
+    b_index = Enum.into(bs, %{}, fn enum -> {enum.name, enum} end)
 
     only_in_a =
-      for name <- filter(Map.keys(a_index), &(!Map.has_key?(b_index, &1))), do: a_index[name]
+      for name <- Enum.filter(Map.keys(a_index), &(!Map.has_key?(b_index, &1))), do: a_index[name]
 
     only_in_b =
-      for name <- filter(Map.keys(b_index), &(!Map.has_key?(a_index, &1))), do: b_index[name]
+      for name <- Enum.filter(Map.keys(b_index), &(!Map.has_key?(a_index, &1))), do: b_index[name]
 
     in_a_and_b =
-      for name <- filter(Map.keys(a_index), &Map.has_key?(b_index, &1)) do
+      for name <- Enum.filter(Map.keys(a_index), &Map.has_key?(b_index, &1)) do
         %{
           a_index[name]
-          | entries: sort_by(a_index[name].entries ++ b_index[name].entries, & &1.value)
+          | entries: Enum.sort_by(a_index[name].entries ++ b_index[name].entries, & &1.value)
         }
       end
 
-    sort_by(only_in_a ++ in_a_and_b ++ only_in_b, & &1.name)
+    Enum.sort_by(only_in_a ++ in_a_and_b ++ only_in_b, & &1.name)
   end
 
   @type enum_description :: %{
@@ -185,7 +183,7 @@ defmodule MAVLink.Parser do
   @spec parse_enum(tuple) :: enum_description
   defp parse_enum(element) do
     %{
-      name: :xmerl_xpath.string(~c"@name", element) |> extract_text |> downcase |> to_atom,
+      name: :xmerl_xpath.string(~c"@name", element) |> extract_text |> downcase |> String.to_atom,
       description:
         :xmerl_xpath.string(~c"/enum/description/text()", element)
         |> extract_text
@@ -207,8 +205,8 @@ defmodule MAVLink.Parser do
     value_attr = :xmerl_xpath.string(~c"@value", element)
 
     %{
-      value: if(not empty?(value_attr), do: extract_text(value_attr) |> to_integer, else: nil),
-      name: :xmerl_xpath.string(~c"@name", element) |> extract_text |> downcase |> to_atom,
+      value: if(not Enum.empty?(value_attr), do: extract_text(value_attr) |> to_integer, else: nil),
+      name: :xmerl_xpath.string(~c"@name", element) |> extract_text |> downcase |> String.to_atom,
       description:
         :xmerl_xpath.string(~c"/entry/description/text()", element)
         |> extract_text
@@ -241,7 +239,7 @@ defmodule MAVLink.Parser do
   @spec parse_message(tuple, String.t()) :: message_description
   defp parse_message(element, version) do
     message_description =
-      reduce(
+      Enum.reduce(
         xmlElement(element, :content),
         %{
           id: :xmerl_xpath.string(~c"@id", element) |> extract_text |> to_integer,
@@ -265,7 +263,7 @@ defmodule MAVLink.Parser do
         end
       )
 
-    %{message_description | fields: reverse(message_description.fields)}
+    %{message_description | fields: Enum.reverse(message_description.fields)}
   end
 
   @type field_description :: %{
@@ -312,7 +310,7 @@ defmodule MAVLink.Parser do
   defp parse_type_ordinality_omit_arg_constant_val(type_string, version) do
     [type | ordinality] =
       type_string
-      |> split(["[", "]"], trim: true)
+      |> String.split(["[", "]"], trim: true)
 
     case type do
       "uint8_t_mavlink_version" ->
@@ -322,11 +320,11 @@ defmodule MAVLink.Parser do
         {
           type,
           cond do
-            ordinality |> empty? ->
+            ordinality |> Enum.empty? ->
               1
 
             true ->
-              ordinality |> first |> to_integer
+              ordinality |> List.first |> to_integer
           end,
           false,
           nil
@@ -360,5 +358,5 @@ defmodule MAVLink.Parser do
   @spec to_atom_or_nil(String.t() | nil) :: atom | nil
   defp to_atom_or_nil(nil), do: nil
   defp to_atom_or_nil(""), do: nil
-  defp to_atom_or_nil(value) when is_binary(value), do: to_atom(value)
+  defp to_atom_or_nil(value) when is_binary(value), do: String.to_atom(value)
 end

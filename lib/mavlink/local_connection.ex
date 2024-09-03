@@ -6,8 +6,6 @@ defmodule MAVLink.LocalConnection do
 
   require Logger
 
-  import Enum, only: [reduce: 3, filter: 2]
-
   alias MAVLink.Frame
   alias MAVLink.LocalConnection
 
@@ -67,8 +65,8 @@ defmodule MAVLink.LocalConnection do
           {:error, {:already_started, _}} ->
             :ok = Logger.debug("Restoring subscriptions from Subscription Cache")
 
-            reduce(
-              Agent.get(MAVLink.SubscriptionCache, fn subs -> subs end),
+            Agent.get(MAVLink.SubscriptionCache, fn subs -> subs end)
+            |> Enum.reduce(
               local_connection,
               fn {query, pid}, lc -> subscribe(query, pid, lc) end
             )
@@ -128,7 +126,8 @@ defmodule MAVLink.LocalConnection do
     %LocalConnection{
       local_connection
       | subscriptions:
-          Enum.uniq([{query, pid} | local_connection.subscriptions])
+          [{query, pid} | local_connection.subscriptions]
+          |> Enum.uniq()
           |> update_subscription_cache
     }
   end
@@ -140,7 +139,8 @@ defmodule MAVLink.LocalConnection do
     %LocalConnection{
       local_connection
       | subscriptions:
-          filter(local_connection.subscriptions, &(not match?({_, ^pid}, &1)))
+          local_connection.subscriptions
+          |> Enum.filter(&(not match?({_, ^pid}, &1)))
           |> update_subscription_cache
     }
   end
@@ -152,7 +152,8 @@ defmodule MAVLink.LocalConnection do
     %LocalConnection{
       local_connection
       | subscriptions:
-          filter(local_connection.subscriptions, &(not match?({_, ^pid}, &1)))
+          local_connection.subscriptions
+          |> Enum.filter(&(not match?({_, ^pid}, &1)))
           |> update_subscription_cache
     }
   end
