@@ -37,7 +37,7 @@ MAVLink message definition files for popular dialects can be found [here](https:
 To generate an Elixir source file containing the modules we need to speak a MAVLink dialect (for example ardupilotmega):
 
 ```
-> mix mavlink test/input/ardupilotmega.xml lib/apm.ex APM
+> mix mavlink message_definitions/v1.0/ardupilotmega.xml lib/apm.ex APM
 * creating lib/apm.ex
 Generated APM in 'lib/apm.ex'.
 >
