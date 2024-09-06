@@ -279,16 +279,14 @@ defmodule MAVLink.Router do
   def handle_cast({:subscribe, query, pid}, state) do
     {:noreply,
      update_in(
-       state,
-       [Access.key!(:connections), :local],
+       state.connections[:local],
        &LocalConnection.subscribe(query, pid, &1)
      )}
   end
 
   # Call to unsubscribe() API
   def handle_cast({:unsubscribe, pid}, state) do
-    {:noreply,
-     update_in(state, [Access.key!(:connections), :local], &LocalConnection.unsubscribe(pid, &1))}
+    {:noreply, update_in(state.connections[:local], &LocalConnection.unsubscribe(pid, &1))}
   end
 
   @impl true
@@ -362,8 +360,7 @@ defmodule MAVLink.Router do
     do:
       {:noreply,
        update_in(
-         state,
-         [Access.key!(:connections), :local],
+         state.connections[:local],
          &LocalConnection.subscriber_down(pid, &1)
        )}
 
@@ -474,26 +471,26 @@ defmodule MAVLink.Router do
       %{
         state
         | # Don't add system/components from local connection to routes because local
-        # automatically matches everything in matching_system_components() and we
-        # don't want to receive messages twice
-        routes:
-          case source_connection_key do
-            :local ->
-              routes
+          # automatically matches everything in matching_system_components() and we
+          # don't want to receive messages twice
+          routes:
+            case source_connection_key do
+              :local ->
+                routes
 
-            _ ->
-              Map.put(
-                routes,
-                {source_system, source_component},
-                source_connection_key
-              )
-          end,
-        connections:
-          Map.put(
-            connections,
-            source_connection_key,
-            source_connection
-          )
+              _ ->
+                Map.put(
+                  routes,
+                  {source_system, source_component},
+                  source_connection_key
+                )
+            end,
+          connections:
+            Map.put(
+              connections,
+              source_connection_key,
+              source_connection
+            )
       }
     }
   end
@@ -509,11 +506,11 @@ defmodule MAVLink.Router do
       %{
         state
         | connections:
-          Map.put(
-            connections,
-            connection_key,
-            connection
-          )
+            Map.put(
+              connections,
+              connection_key,
+              connection
+            )
       }
     }
   end
