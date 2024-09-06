@@ -68,7 +68,7 @@ defmodule MAVLink.Frame do
             rest::binary>>
       ) do
     {
-      struct(MAVLink.Frame,
+      %MAVLink.Frame{
         version: 1,
         payload_length: payload_length,
         sequence_number: sequence_number,
@@ -83,7 +83,7 @@ defmodule MAVLink.Frame do
             0,
             byte_size(raw_and_rest) - byte_size(rest)
           )
-      ),
+      },
       rest
     }
   end
@@ -102,7 +102,7 @@ defmodule MAVLink.Frame do
       0 ->
         # Vanilla MAVLink 2, we can deal with this
         {
-          struct(MAVLink.Frame,
+          %MAVLink.Frame{
             version: 2,
             payload_length: payload_length,
             incompatible_flags: 0,
@@ -119,7 +119,7 @@ defmodule MAVLink.Frame do
                 0,
                 byte_size(raw_and_rest) - byte_size(rest)
               )
-          ),
+          },
           rest
         }
 
@@ -171,43 +171,47 @@ defmodule MAVLink.Frame do
                 case target do
                   :broadcast ->
                     {:ok,
-                     struct(frame,
-                       message: message,
-                       target_system: 0,
-                       target_component: 0,
-                       target: target,
-                       crc_extra: crc_extra
-                     )}
+                     %{
+                       frame
+                       | message: message,
+                         target_system: 0,
+                         target_component: 0,
+                         target: target,
+                         crc_extra: crc_extra
+                     }}
 
                   :system ->
                     {:ok,
-                     struct(frame,
-                       message: message,
-                       target_system: message.target_system,
-                       target_component: 0,
-                       target: target,
-                       crc_extra: crc_extra
-                     )}
+                     %{
+                       frame
+                       | message: message,
+                         target_system: message.target_system,
+                         target_component: 0,
+                         target: target,
+                         crc_extra: crc_extra
+                     }}
 
                   :system_component ->
                     {:ok,
-                     struct(frame,
-                       message: message,
-                       target_system: message.target_system,
-                       target_component: message.target_component,
-                       target: target,
-                       crc_extra: crc_extra
-                     )}
+                     %{
+                       frame
+                       | message: message,
+                         target_system: message.target_system,
+                         target_component: message.target_component,
+                         target: target,
+                         crc_extra: crc_extra
+                     }}
 
                   :component ->
                     {:ok,
-                     struct(frame,
-                       message: message,
-                       target_system: 0,
-                       target_component: message.target_component,
-                       target: target,
-                       crc_extra: crc_extra
-                     )}
+                     %{
+                       frame
+                       | message: message,
+                         target_system: 0,
+                         target_component: message.target_component,
+                         target: target,
+                         crc_extra: crc_extra
+                     }}
                 end
 
               _ ->
@@ -243,10 +247,10 @@ defmodule MAVLink.Frame do
         frame.source_component::unsigned-integer-size(8),
         frame.message_id::little-unsigned-integer-size(8), frame.payload::binary>>
 
-    frame
-    |> struct(
-      mavlink_1_raw: <<0xFE>> <> mavlink_1_frame <> checksum(mavlink_1_frame, frame.crc_extra)
-    )
+    %{
+      frame
+      | mavlink_1_raw: <<0xFE>> <> mavlink_1_frame <> checksum(mavlink_1_frame, frame.crc_extra)
+    }
   end
 
   def pack_frame(frame = %MAVLink.Frame{version: 2}) do
@@ -266,9 +270,10 @@ defmodule MAVLink.Frame do
         truncated_payload::binary
       >>
 
-    struct(frame,
-      mavlink_2_raw: <<0xFD>> <> mavlink_2_frame <> checksum(mavlink_2_frame, frame.crc_extra)
-    )
+    %{
+      frame
+      | mavlink_2_raw: <<0xFD>> <> mavlink_2_frame <> checksum(mavlink_2_frame, frame.crc_extra)
+    }
   end
 
   # MAVLink 2 truncate trailing 0s in payload

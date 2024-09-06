@@ -33,10 +33,10 @@ defmodule MAVLink.TCPOutConnection do
             Logger.debug("TCPOutConnection.handle_info: Not a frame #{inspect(buffer <> raw)}")
         end
 
-        {:error, :not_a_frame, socket, struct(receiving_connection, buffer: <<>>)}
+        {:error, :not_a_frame, socket, %{receiving_connection | buffer: <<>>}}
 
       {nil, rest} ->
-        {:error, :incomplete_frame, socket, struct(receiving_connection, buffer: rest)}
+        {:error, :incomplete_frame, socket, %{receiving_connection | buffer: rest}}
 
       {received_frame, rest} ->
         # Rest could be a message, return later to try emptying the buffer
@@ -44,15 +44,15 @@ defmodule MAVLink.TCPOutConnection do
 
         case validate_and_unpack(received_frame, dialect) do
           {:ok, valid_frame} ->
-            {:ok, socket, struct(receiving_connection, buffer: rest), valid_frame}
+            {:ok, socket, %{receiving_connection | buffer: rest}, valid_frame}
 
           :unknown_message ->
             # We re-broadcast valid frames with unknown messages
             :ok =
               Logger.debug("rebroadcasting unknown message with id #{received_frame.message_id}}")
 
-            {:ok, socket, struct(receiving_connection, buffer: rest),
-             struct(received_frame, target: :broadcast)}
+            {:ok, socket, %{receiving_connection | buffer: rest},
+             %{received_frame | target: :broadcast}}
 
           reason ->
             :ok =
@@ -60,7 +60,7 @@ defmodule MAVLink.TCPOutConnection do
                 "TCPOutConnection.handle_info: frame received failed: #{Atom.to_string(reason)}"
               )
 
-            {:error, reason, socket, struct(receiving_connection, buffer: rest)}
+            {:error, reason, socket, %{receiving_connection | buffer: rest}}
         end
     end
   end

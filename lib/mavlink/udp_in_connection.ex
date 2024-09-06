@@ -48,7 +48,7 @@ defmodule MAVLink.UDPInConnection do
               Logger.debug("rebroadcasting unknown message with id #{received_frame.message_id}}")
 
             {:ok, {socket, source_addr, source_port}, receiving_connection,
-             struct(received_frame, target: :broadcast)}
+             %{received_frame | target: :broadcast}}
 
           reason ->
             :ok =

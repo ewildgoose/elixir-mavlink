@@ -37,10 +37,10 @@ defmodule MAVLink.SerialConnection do
             Logger.debug("SerialConnection.handle_info: Not a frame: #{inspect(buffer <> raw)}")
         end
 
-        {:error, :not_a_frame, port, struct(receiving_connection, buffer: <<>>)}
+        {:error, :not_a_frame, port, %{receiving_connection | buffer: <<>>}}
 
       {nil, rest} ->
-        {:error, :incomplete_frame, port, struct(receiving_connection, buffer: rest)}
+        {:error, :incomplete_frame, port, %{receiving_connection | buffer: rest}}
 
       {received_frame, rest} ->
         # Rest could include a complete message, return later to try emptying the buffer
@@ -49,15 +49,15 @@ defmodule MAVLink.SerialConnection do
 
         case validate_and_unpack(received_frame, dialect) do
           {:ok, valid_frame} ->
-            {:ok, port, struct(receiving_connection, buffer: rest), valid_frame}
+            {:ok, port, %{receiving_connection | buffer: rest}, valid_frame}
 
           :unknown_message ->
             # We re-broadcast valid frames with unknown messages
             :ok =
               Logger.debug("rebroadcasting unknown message with id #{received_frame.message_id}}")
 
-            {:ok, port, struct(receiving_connection, buffer: rest),
-             struct(received_frame, target: :broadcast)}
+            {:ok, port, %{receiving_connection | buffer: rest},
+             %{received_frame | target: :broadcast}}
 
           reason ->
             :ok =
@@ -65,7 +65,7 @@ defmodule MAVLink.SerialConnection do
                 "SerialConnection.handle_info: frame received failed: #{Atom.to_string(reason)}"
               )
 
-            {:error, reason, port, struct(receiving_connection, buffer: rest)}
+            {:error, reason, port, %{receiving_connection | buffer: rest}}
         end
     end
   end

@@ -385,10 +385,7 @@ defmodule MAVLink.Router do
       ) do
     {
       :noreply,
-      struct(
-        state,
-        connections: Map.put(connections, connection_key, connection)
-      )
+      %{state | connections: Map.put(connections, connection_key, connection)}
     }
   end
 
@@ -457,7 +454,7 @@ defmodule MAVLink.Router do
 
   # A handle_info() received an error and wants us to forget the borked connection
   defp remove_connection(connection_key, state = %Router{connections: connections}) do
-    struct(state, connections: Map.delete(connections, connection_key))
+    %{state | connections: Map.delete(connections, connection_key)}
   end
 
   # Map system/component ids to connections on which they have been seen for targeted messages
@@ -474,9 +471,9 @@ defmodule MAVLink.Router do
       :ok,
       source_connection_key,
       frame,
-      struct(
-        state,
-        # Don't add system/components from local connection to routes because local
+      %{
+        state
+        | # Don't add system/components from local connection to routes because local
         # automatically matches everything in matching_system_components() and we
         # don't want to receive messages twice
         routes:
@@ -497,7 +494,7 @@ defmodule MAVLink.Router do
             source_connection_key,
             source_connection
           )
-      )
+      }
     }
   end
 
@@ -509,15 +506,15 @@ defmodule MAVLink.Router do
     {
       :error,
       reason,
-      struct(
-        state,
-        connections:
+      %{
+        state
+        | connections:
           Map.put(
             connections,
             connection_key,
             connection
           )
-      )
+      }
     }
   end
 

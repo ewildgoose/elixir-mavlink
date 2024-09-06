@@ -37,12 +37,13 @@ defmodule MAVLink.LocalConnection do
     {
       :ok,
       :local,
-      struct(receiving_connection, sequence_number: rem(sequence_number + 1, 255)),
-      struct(frame,
-        source_system: system,
-        source_component: component,
-        sequence_number: sequence_number
-      )
+      %{receiving_connection | sequence_number: rem(sequence_number + 1, 255)},
+      %{
+        frame
+        | source_system: system,
+          source_component: component,
+          sequence_number: sequence_number
+      }
       |> Frame.pack_frame()
     }
   end
@@ -77,7 +78,7 @@ defmodule MAVLink.LocalConnection do
 
   def forward(to_connection, frame = %Frame{message: nil}) do
     # If we couldn't unpack the message set the message_type to MAVLink.UnknownMessage
-    forward(to_connection, struct(frame, message: %{__struct__: MAVLink.UnknownMessage}))
+    forward(to_connection, %{frame | message: %{__struct__: MAVLink.UnknownMessage}})
   end
 
   def forward(
