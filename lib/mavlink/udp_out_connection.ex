@@ -60,6 +60,10 @@ defmodule MAVLink.UDPOutConnection do
     end
   end
 
+  def async_connect(["udpout" | _] = params, controlling_process) do
+    Task.start_link(fn -> connect(params, controlling_process) end)
+  end
+
   def connect(["udpout", address, port], controlling_process) do
     case :gen_udp.open(0, [:binary, active: true]) do
       {:ok, socket} ->

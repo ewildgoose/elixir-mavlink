@@ -70,6 +70,10 @@ defmodule MAVLink.SerialConnection do
     end
   end
 
+  def async_connect(["serial" | _] = params, controlling_process) do
+    Task.start_link(fn -> connect(params, controlling_process) end)
+  end
+
   def connect(["serial", port, baud, uart], controlling_process) do
     if Map.has_key?(UART.enumerate(), port) do
       case UART.open(uart, port, speed: baud, active: true) do

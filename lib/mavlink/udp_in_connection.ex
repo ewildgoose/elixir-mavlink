@@ -62,6 +62,10 @@ defmodule MAVLink.UDPInConnection do
     end
   end
 
+  def async_connect(["udpin" | _] = params, controlling_process) do
+    Task.start_link(fn -> connect(params, controlling_process) end)
+  end
+
   def connect(["udpin", address, port], controlling_process) do
     # Do not add to connections, we don't want to forward to ourselves
     # Router.update_route_info() will add connections for other parties that

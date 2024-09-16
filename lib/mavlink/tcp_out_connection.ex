@@ -65,6 +65,10 @@ defmodule MAVLink.TCPOutConnection do
     end
   end
 
+  def async_connect(["tcpout" | _] = params, controlling_process) do
+    Task.start_link(fn -> connect(params, controlling_process) end)
+  end
+
   def connect(["tcpout", address, port], controlling_process) do
     case :gen_tcp.connect(address, port, [:binary, active: true]) do
       {:ok, socket} ->

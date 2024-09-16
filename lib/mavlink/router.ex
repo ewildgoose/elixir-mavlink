@@ -401,16 +401,16 @@ defmodule MAVLink.Router do
     do: connect(String.split(connection_string, [":", ","]))
 
   defp connect(tokens = ["udpin" | _]),
-    do: spawn(UDPInConnection, :connect, [validate_address_and_port(tokens), self()])
+    do: UDPInConnection.async_connect(validate_address_and_port(tokens), self())
 
   defp connect(tokens = ["udpout" | _]),
-    do: spawn(UDPOutConnection, :connect, [validate_address_and_port(tokens), self()])
+    do: UDPOutConnection.async_connect(validate_address_and_port(tokens), self())
 
   defp connect(tokens = ["tcpout" | _]),
-    do: spawn(TCPOutConnection, :connect, [validate_address_and_port(tokens), self()])
+    do: TCPOutConnection.async_connect(validate_address_and_port(tokens), self())
 
   defp connect(tokens = ["serial" | _]),
-    do: spawn(SerialConnection, :connect, [validate_port_and_baud(tokens), self()])
+    do: SerialConnection.async_connect(validate_port_and_baud(tokens), self())
 
   defp connect([invalid_protocol | _]),
     do: raise(ArgumentError, message: "invalid protocol #{invalid_protocol}")
